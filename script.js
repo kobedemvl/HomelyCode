@@ -1,80 +1,80 @@
-function gatherInputValues() {
-    const houseDetails = {
-        purchasePrice: parseFloat(document.getElementById('purchasePrice').value),
-        sellingPrice: parseFloat(document.getElementById('sellingPrice').value)
-    };
-
-    const loanDetails = {
-        buyerDownPayment: parseFloat(document.getElementById('buyerDownPayment').value),
-        interestRate: parseFloat(document.getElementById('interestRate').value) / 100, // Convert to decimal
-        loanDuration: parseFloat(document.getElementById('loanDuration').value),
-        notaryCosts: parseFloat(document.getElementById('notaryCosts').value)
-    };
-
-    const homelyDetails = {
-        homelyDownPayment: parseFloat(document.getElementById('homelyDownPayment').value),
-        leverage: parseFloat(document.getElementById('leverage').value),
-        buyoutDuration: parseFloat(document.getElementById('buyoutDuration').value)
-    };
-
-    // Aggregate all input data into a unified data structure
-    const inputData = { ...houseDetails, ...loanDetails, ...homelyDetails };
-
-    return inputData;
-}
-
-
-// Calculate monthly payments
-function calculateMonthlyPayments(inputValues) {
-    const principal = inputValues.purchasePrice - inputValues.buyerDownPayment - inputValues.homelyDownPayment;
-    const monthlyInterestRate = inputValues.interestRate / 12;
-    const totalPayments = inputValues.loanDuration * 12;
-
-    // Monthly payment calculation using the formula for an amortizing loan
-    const monthlyPayment = (principal * monthlyInterestRate) / (1 - Math.pow(1 + monthlyInterestRate, -totalPayments));
-
-    return monthlyPayment;
-}
-
-// Calculate total interest paid until buyout
-function calculateTotalInterest(inputValues) {
-    //calculate total interest paid until buyout
-    const monthlyPayment = calculateMonthlyPayments(inputValues);
-    const totalPaymentsUntilBuyout = monthlyPayment * inputValues.buyoutDuration * 12;
-    const totalInterestUntilBuyout = totalPaymentsUntilBuyout - (inputValues.purchasePrice - inputValues.buyerDownPayment - inputValues.homelyDownPayment) * (1 - Math.pow(1 + inputValues.interestRate / 12, -inputValues.buyoutDuration * 12));
-
-    return totalInterestUntilBuyout;
-}
-
-function calculatePrincipalInterestMonthly(inputValues) {
-    // returns the principal left for every month and the interest paid for every month,
-    // assuming the interest rate is the same for every month
-    // returns a complete array of the principal and interest for every month
-
-    const monthlyPayment = calculateMonthlyPayments(inputValues);
-    const monthlyInterestRate = inputValues.interestRate / 12;
-    const totalPayments = inputValues.loanDuration * 12;
-    const principal = inputValues.purchasePrice - inputValues.buyerDownPayment - inputValues.homelyDownPayment;
-    const principalInterestMonthly = [{ principalLeft: principal, totalInterestPaid: 0 }];
-    let principalLeft = principal;
-    let interestPaid = 0;
-    let totalInterestPaid = 0;
-    let principalPaid = 0;
-
-    for (let i = 0; i < totalPayments; i++) {
-        interestPaid = principalLeft * monthlyInterestRate;
-        principalPaid = monthlyPayment - interestPaid;
-        totalInterestPaid += interestPaid;
-        principalLeft -= principalPaid;
-        principalInterestMonthly.push({ principalLeft, totalInterestPaid });
-    }
-
-    return principalInterestMonthly;
-}
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    function gatherInputValues() {
+        const houseDetails = {
+            purchasePrice: parseFloat(document.getElementById('purchasePrice').value),
+            sellingPrice: parseFloat(document.getElementById('sellingPrice').value)
+        };
+
+        const loanDetails = {
+            buyerDownPayment: parseFloat(document.getElementById('buyerDownPayment').value),
+            interestRate: parseFloat(document.getElementById('interestRate').value) / 100, // Convert to decimal
+            loanDuration: parseFloat(document.getElementById('loanDuration').value),
+            notaryCosts: parseFloat(document.getElementById('notaryCosts').value)
+        };
+
+        const homelyDetails = {
+            homelyDownPayment: parseFloat(document.getElementById('homelyDownPayment').value),
+            leverage: parseFloat(document.getElementById('leverage').value),
+            buyoutDuration: parseFloat(document.getElementById('buyoutDuration').value)
+        };
+
+        // Aggregate all input data into a unified data structure
+        const inputData = { ...houseDetails, ...loanDetails, ...homelyDetails };
+
+        return inputData;
+    }
+
+
+    // Calculate monthly payments
+    function calculateMonthlyPayments(inputValues) {
+        const principal = inputValues.purchasePrice - inputValues.buyerDownPayment - inputValues.homelyDownPayment;
+        const monthlyInterestRate = inputValues.interestRate / 12;
+        const totalPayments = inputValues.loanDuration * 12;
+
+        // Monthly payment calculation using the formula for an amortizing loan
+        const monthlyPayment = (principal * monthlyInterestRate) / (1 - Math.pow(1 + monthlyInterestRate, -totalPayments));
+
+        return monthlyPayment;
+    }
+
+    // Calculate total interest paid until buyout
+    function calculateTotalInterest(inputValues) {
+        //calculate total interest paid until buyout
+        const monthlyPayment = calculateMonthlyPayments(inputValues);
+        const totalPaymentsUntilBuyout = monthlyPayment * inputValues.buyoutDuration * 12;
+        const totalInterestUntilBuyout = totalPaymentsUntilBuyout - (inputValues.purchasePrice - inputValues.buyerDownPayment - inputValues.homelyDownPayment) * (1 - Math.pow(1 + inputValues.interestRate / 12, -inputValues.buyoutDuration * 12));
+
+        return totalInterestUntilBuyout;
+    }
+
+    function calculatePrincipalInterestMonthly(inputValues) {
+        // returns the principal left for every month and the interest paid for every month,
+        // assuming the interest rate is the same for every month
+        // returns a complete array of the principal and interest for every month
+
+        const monthlyPayment = calculateMonthlyPayments(inputValues);
+        const monthlyInterestRate = inputValues.interestRate / 12;
+        const totalPayments = inputValues.loanDuration * 12;
+        const principal = inputValues.purchasePrice - inputValues.buyerDownPayment - inputValues.homelyDownPayment;
+        const principalInterestMonthly = [{ principalLeft: principal, totalInterestPaid: 0 }];
+        let principalLeft = principal;
+        let interestPaid = 0;
+        let totalInterestPaid = 0;
+        let principalPaid = 0;
+
+        for (let i = 0; i < totalPayments; i++) {
+            interestPaid = principalLeft * monthlyInterestRate;
+            principalPaid = monthlyPayment - interestPaid;
+            totalInterestPaid += interestPaid;
+            principalLeft -= principalPaid;
+            principalInterestMonthly.push({ principalLeft, totalInterestPaid });
+        }
+
+        return principalInterestMonthly;
+    }
+
     // Function to update the input field value and label when a slider is changed
 
     // Function to calculate and update output values
@@ -107,28 +107,17 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('leverageValue').textContent = inputValues.leverage
     }
 
-    
-    function updateHouseDetailsOutputValues() {
-        // Gather input values
-        const inputValues = gatherInputValues();
-
-        updateInformationOutput(inputValues);
-    }
-
+    let chartPrincipalInterest;  // Declare a global variable to hold the chart instance
 
     function updateGraphPricipalInterest(inputValues) {
-
-        // updates the graph with interest paid and principal left
         const principalInterestMonthly = calculatePrincipalInterestMonthly(inputValues);
         const principalLeft = principalInterestMonthly
             .filter((_, index) => index % 4 === 0)
             .map(month => month.principalLeft);
-
         const interestPaid = principalInterestMonthly
             .filter((_, index) => index % 4 === 0)
             .map(month => month.totalInterestPaid);
-
-        // Apex Charts for principal and interest
+    
         let options = {
             chart: {
                 type: 'line',
@@ -136,31 +125,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 fill: {
                     opacity: 0.5
                 },
-                dataLabels: false
+                dataLabels: false,
+                height: 300,
+            },
+            animations: {
+                enabled: false
             },
             series: [{
                 name: 'Principal Left',
-                data: principalLeft,
-                dataLabels: {
-                    enabled: false
-                }
+                data: principalLeft
             }, {
                 name: 'Interest Paid',
-                data: interestPaid,
-                dataLabels: {
-                    enabled: false
-                }
+                data: interestPaid
             }],
-
             xaxis: {
-                tickAmount: 10, // Set the maximum number of ticks
+                tickAmount: 10,
                 categories: [...Array(principalLeft.length).keys()].map(month => {
                     const year = Math.floor(month * 4 / 12) + 1;
                     const monthName = new Date(2000, month * 4 % 12, 1).toLocaleString('default', { month: 'short' });
                     return `Y${year} ${monthName}`;
                 })
             },
-
             yaxis: {
                 labels: {
                     formatter: function (val) {
@@ -168,24 +153,39 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             },
-        }
-        // Select the chart ID div
+        };
+    
         let chartContainer = document.getElementById('chartContainerPrincipal');
-        // Render the chart
-        var chart = new ApexCharts(chartContainer, options);
-        chart.render();
+    
+        // Check if chart already exists
+        if (chartPrincipalInterest) {
+            // Update the existing chart's series
+            chartPrincipalInterest.updateSeries([{
+                name: 'Principal Left',
+                data: principalLeft
+            }, {
+                name: 'Interest Paid',
+                data: interestPaid
+            }]);
+        } else {
+            // Initialize the chart for the first time
+            chartPrincipalInterest = new ApexCharts(chartContainer, options);
+            chartPrincipalInterest.render();
+        }
     }
-
+    
+    let chartHouseValue;  // Declare a global variable to hold the chart instance
     function updateGraphsHouseValue(inputValues) {
         // updates the graph with house value
         const houseValue = []
         const yearlyAppreciationRate = (inputValues.sellingPrice / inputValues.purchasePrice) ** (1 / inputValues.buyoutDuration) - 1;
         for (let i = 0; i < inputValues.buyoutDuration; i++) {
-            houseValue.push(inputValues.purchasePrice * (1 + yearlyAppreciationRate)**i);
+            houseValue.push(inputValues.purchasePrice * (1 + yearlyAppreciationRate) ** i);
         }
         houseValue.push(inputValues.sellingPrice);
         const homelyStakeValue = houseValue.map(value => ((value / inputValues.purchasePrice - 1) * inputValues.leverage + 1) * inputValues.homelyDownPayment);
         const buyerStakeValue = houseValue.map(value => value - homelyStakeValue[houseValue.indexOf(value)]);
+
 
         // Apex Charts for house value and homely stake value
         let options = {
@@ -195,7 +195,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 fill: {
                     opacity: 0.5
                 },
-                dataLabels: false
+                dataLabels: false,
+                height: 300,
+            },
+            animations: {
+                enabled: false  // Disable animations
             },
             series: [{
                 name: 'House Value',
@@ -203,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dataLabels: {
                     enabled: false
                 }
-            }, 
+            },
             {
                 name: 'Buyer Stake Value',
                 data: buyerStakeValue,
@@ -218,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     enabled: false
                 }
             },
-        ],
+            ],
 
             xaxis: {
                 tickAmount: 10, // Set the maximum number of ticks
@@ -235,35 +239,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             },
         }
-        // Select the chart ID div
+        
         let chartContainer = document.getElementById('chartContainerHouseValue');
-        // Render the chart
-        var chart = new ApexCharts(chartContainer, options);
-        chart.render();
+
+        // Check if chart already exists
+        if (chartHouseValue) {
+            // Update the existing chart's series
+            chartHouseValue.updateSeries([{
+                name: 'House Value',
+                data: houseValue
+            },
+            {
+                name: 'Buyer Stake Value',
+                data: buyerStakeValue
+            },
+            {
+                name: 'Homely Stake Value',
+                data: homelyStakeValue
+            },
+            ]);
+        } else {
+            // Initialize the chart for the first time
+            chartHouseValue = new ApexCharts(chartContainer, options);
+            chartHouseValue.render();
+        }
+    }
+
+    function updateAll() {
+        // Gather input values
+        const inputValues = gatherInputValues();
+
+        updateInformationOutput(inputValues);
+        updateGraphPricipalInterest(inputValues);
+        updateGraphsHouseValue(inputValues);
     }
 
     // Add event listeners to input fields
-    document.getElementById('purchasePrice').addEventListener('input', updateHouseDetailsOutputValues);
-    document.getElementById('sellingPrice').addEventListener('input', updateHouseDetailsOutputValues);
-    document.getElementById('buyoutDuration').addEventListener('input', updateHouseDetailsOutputValues);
-    document.getElementById('buyerDownPayment').addEventListener('input', updateHouseDetailsOutputValues);
-    document.getElementById('interestRate').addEventListener('input', updateHouseDetailsOutputValues);
-    document.getElementById('loanDuration').addEventListener('input', updateHouseDetailsOutputValues);
-    document.getElementById('notaryCosts').addEventListener('input', updateHouseDetailsOutputValues);
-    document.getElementById('homelyDownPayment').addEventListener('input', updateHouseDetailsOutputValues);
-    document.getElementById('leverage').addEventListener('input', updateHouseDetailsOutputValues);
+    document.getElementById('purchasePrice').addEventListener('input', updateAll);
+    document.getElementById('sellingPrice').addEventListener('input', updateAll);
+    document.getElementById('buyoutDuration').addEventListener('input', updateAll);
+    document.getElementById('buyerDownPayment').addEventListener('input', updateAll);
+    document.getElementById('interestRate').addEventListener('input', updateAll);
+    document.getElementById('loanDuration').addEventListener('input', updateAll);
+    document.getElementById('notaryCosts').addEventListener('input', updateAll);
+    document.getElementById('homelyDownPayment').addEventListener('input', updateAll);
+    document.getElementById('leverage').addEventListener('input', updateAll);
 
     // Initial calculation
-    updateHouseDetailsOutputValues();
-    updateGraphPricipalInterest(gatherInputValues());
-    updateGraphsHouseValue(gatherInputValues());
-
-    document.getElementById('calculateButton').addEventListener('click', function() {
-        const inputValues = gatherInputValues();
-        updateGraphPricipalInterest(inputValues);
-        updateGraphsHouseValue(inputValues);
-    });
-
+    updateAll();
 
 });
 
