@@ -1,4 +1,8 @@
+// script.js
+import { calculateMonthlyPayments, calculateTotalInterest, calculatePrincipalInterestMonthly, createPricipalInterestOptions, createHouseValueOptions } from './functions.mjs';
 
+
+// Now you can use these functions in this file
 document.addEventListener('DOMContentLoaded', () => {
 
     function gatherInputValues() {
@@ -24,55 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const inputData = { ...houseDetails, ...loanDetails, ...homelyDetails };
 
         return inputData;
-    }
-
-
-    // Calculate monthly payments
-    function calculateMonthlyPayments(inputValues) {
-        const principal = inputValues.purchasePrice - inputValues.buyerDownPayment - inputValues.homelyDownPayment;
-        const monthlyInterestRate = inputValues.interestRate / 12;
-        const totalPayments = inputValues.loanDuration * 12;
-
-        // Monthly payment calculation using the formula for an amortizing loan
-        const monthlyPayment = (principal * monthlyInterestRate) / (1 - Math.pow(1 + monthlyInterestRate, -totalPayments));
-
-        return monthlyPayment;
-    }
-
-    // Calculate total interest paid until buyout
-    function calculateTotalInterest(inputValues) {
-        //calculate total interest paid until buyout
-        const monthlyPayment = calculateMonthlyPayments(inputValues);
-        const totalPaymentsUntilBuyout = monthlyPayment * inputValues.buyoutDuration * 12;
-        const totalInterestUntilBuyout = totalPaymentsUntilBuyout - (inputValues.purchasePrice - inputValues.buyerDownPayment - inputValues.homelyDownPayment) * (1 - Math.pow(1 + inputValues.interestRate / 12, -inputValues.buyoutDuration * 12));
-
-        return totalInterestUntilBuyout;
-    }
-
-    function calculatePrincipalInterestMonthly(inputValues) {
-        // returns the principal left for every month and the interest paid for every month,
-        // assuming the interest rate is the same for every month
-        // returns a complete array of the principal and interest for every month
-
-        const monthlyPayment = calculateMonthlyPayments(inputValues);
-        const monthlyInterestRate = inputValues.interestRate / 12;
-        const totalPayments = inputValues.loanDuration * 12;
-        const principal = inputValues.purchasePrice - inputValues.buyerDownPayment - inputValues.homelyDownPayment;
-        const principalInterestMonthly = [{ principalLeft: principal, totalInterestPaid: 0 }];
-        let principalLeft = principal;
-        let interestPaid = 0;
-        let totalInterestPaid = 0;
-        let principalPaid = 0;
-
-        for (let i = 0; i < totalPayments; i++) {
-            interestPaid = principalLeft * monthlyInterestRate;
-            principalPaid = monthlyPayment - interestPaid;
-            totalInterestPaid += interestPaid;
-            principalLeft -= principalPaid;
-            principalInterestMonthly.push({ principalLeft, totalInterestPaid });
-        }
-
-        return principalInterestMonthly;
     }
 
     // Function to update the input field value and label when a slider is changed
@@ -108,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let chartPrincipalInterest;  // Declare a global variable to hold the chart instance
-
     function updateGraphPricipalInterest(inputValues) {
         const principalInterestMonthly = calculatePrincipalInterestMonthly(inputValues);
         const principalLeft = principalInterestMonthly
@@ -117,43 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const interestPaid = principalInterestMonthly
             .filter((_, index) => index % 4 === 0)
             .map(month => month.totalInterestPaid);
-    
-        let options = {
-            chart: {
-                type: 'line',
-                stacked: false,
-                fill: {
-                    opacity: 0.5
-                },
-                dataLabels: false,
-                height: 300,
-            },
-            animations: {
-                enabled: false
-            },
-            series: [{
-                name: 'Principal Left',
-                data: principalLeft
-            }, {
-                name: 'Interest Paid',
-                data: interestPaid
-            }],
-            xaxis: {
-                tickAmount: 10,
-                categories: [...Array(principalLeft.length).keys()].map(month => {
-                    const year = Math.floor(month * 4 / 12) + 1;
-                    const monthName = new Date(2000, month * 4 % 12, 1).toLocaleString('default', { month: 'short' });
-                    return `Y${year} ${monthName}`;
-                })
-            },
-            yaxis: {
-                labels: {
-                    formatter: function (val) {
-                        return val.toFixed(0);
-                    }
-                }
-            },
-        };
+
+        let options = createPricipalInterestOptions(principalLeft, interestPaid);
     
         let chartContainer = document.getElementById('chartContainerPrincipal');
     
@@ -179,67 +98,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // updates the graph with house value
         const houseValue = []
         const yearlyAppreciationRate = (inputValues.sellingPrice / inputValues.purchasePrice) ** (1 / inputValues.buyoutDuration) - 1;
-        for (let i = 0; i < inputValues.buyoutDuration; i++) {
-            houseValue.push(inputValues.purchasePrice * (1 + yearlyAppreciationRate) ** i);
+        for (let i = 0; i < inputValues.buyoutDuration*4; i++) {
+            houseValue.push(inputValues.purchasePrice * (1 + yearlyAppreciationRate) ** (i/4));
         }
         houseValue.push(inputValues.sellingPrice);
         const homelyStakeValue = houseValue.map(value => ((value / inputValues.purchasePrice - 1) * inputValues.leverage + 1) * inputValues.homelyDownPayment);
         const buyerStakeValue = houseValue.map(value => value - homelyStakeValue[houseValue.indexOf(value)]);
 
-
         // Apex Charts for house value and homely stake value
-        let options = {
-            chart: {
-                type: 'line',
-                stacked: false,
-                fill: {
-                    opacity: 0.5
-                },
-                dataLabels: false,
-                height: 300,
-            },
-            animations: {
-                enabled: false  // Disable animations
-            },
-            series: [{
-                name: 'House Value',
-                data: houseValue,
-                dataLabels: {
-                    enabled: false
-                }
-            },
-            {
-                name: 'Buyer Stake Value',
-                data: buyerStakeValue,
-                dataLabels: {
-                    enabled: false
-                }
-            },
-            {
-                name: 'Homely Stake Value',
-                data: homelyStakeValue,
-                dataLabels: {
-                    enabled: false
-                }
-            },
-            ],
-
-            xaxis: {
-                tickAmount: 10, // Set the maximum number of ticks
-                categories: [...Array(houseValue.length).keys()].map(year => {
-                    return `Y${year}`;
-                })
-            },
-
-            yaxis: {
-                labels: {
-                    formatter: function (val) {
-                        return val.toFixed(0);
-                    }
-                }
-            },
-        }
-        
+        let options = createHouseValueOptions(houseValue, buyerStakeValue, homelyStakeValue);
         let chartContainer = document.getElementById('chartContainerHouseValue');
 
         // Check if chart already exists
@@ -264,6 +131,11 @@ document.addEventListener('DOMContentLoaded', () => {
             chartHouseValue.render();
         }
     }
+
+
+
+
+
 
     function updateAll() {
         // Gather input values
