@@ -142,3 +142,66 @@ export function createHouseValueOptions(houseValue, buyerStakeValue, homelyStake
     }
 }
 
+export function createHouseValueEquity(homelyStakeValue, buyerStakeValue, principalLeft, interestLeft) {
+    return {
+        chart: {
+            type: 'line',
+            stacked: true,
+            fill: {
+                opacity: 0.5
+            },
+            dataLabels: {
+                enabled: false,
+            },
+        
+            height: 300,
+
+        },
+        series: [{
+            name: 'Homely',
+            data: homelyStakeValue,
+            dataLabels: {
+                enabled: false
+            }
+        },
+        {
+            name: 'Buyer',
+            data: buyerStakeValue,
+            dataLabels: {
+                enabled: false
+            }
+        },
+        {
+            name: 'Bank',
+            data: principalLeft,
+            dataLabels: {
+                enabled: false
+            }
+        },
+        {
+            name: 'Interest',
+            data: interestLeft,
+            dataLabels: {
+                enabled: false
+            }
+        },
+        ],
+
+        xaxis: {
+            tickAmount: 10,
+            categories: [...Array(homelyStakeValue.length).keys()].map(month => {
+                const year = Math.floor(month * 4 / 12) + 1;
+                const monthName = new Date(2000, month * 4 % 12, 1).toLocaleString('default', { month: 'short' });
+                return `Y${year} ${monthName}`;
+            })
+        },
+
+        yaxis: {
+            labels: {
+                formatter: function (val) {
+                    return val.toFixed(0);
+                }
+            }
+        },
+    }
+}

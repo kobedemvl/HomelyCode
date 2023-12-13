@@ -1,5 +1,5 @@
 // script.js
-import { calculateMonthlyPayments, calculateTotalInterest, calculatePrincipalInterestMonthly, createPricipalInterestOptions, createHouseValueOptions } from './functions.mjs';
+import { calculateMonthlyPayments, calculateTotalInterest, calculatePrincipalInterestMonthly, createPricipalInterestOptions, createHouseValueOptions, createHouseValueEquity } from './functions.mjs';
 
 
 // Now you can use these functions in this file
@@ -73,9 +73,9 @@ document.addEventListener('DOMContentLoaded', () => {
             .map(month => month.totalInterestPaid);
 
         let options = createPricipalInterestOptions(principalLeft, interestPaid);
-    
+
         let chartContainer = document.getElementById('chartContainerPrincipal');
-    
+
         // Check if chart already exists
         if (chartPrincipalInterest) {
             // Update the existing chart's series
@@ -92,14 +92,14 @@ document.addEventListener('DOMContentLoaded', () => {
             chartPrincipalInterest.render();
         }
     }
-    
+
     let chartHouseValue;  // Declare a global variable to hold the chart instance
     function updateGraphsHouseValue(inputValues) {
         // updates the graph with house value
         const houseValue = []
-        const yearlyAppreciationRate = (inputValues.sellingPrice / inputValues.purchasePrice) ** (1 / inputValues.buyoutDuration) - 1;
-        for (let i = 0; i < inputValues.buyoutDuration*4; i++) {
-            houseValue.push(inputValues.purchasePrice * (1 + yearlyAppreciationRate) ** (i/4));
+        const QuarterlyAppreciationRate = (inputValues.sellingPrice / inputValues.purchasePrice) ** (1 / inputValues.buyoutDuration / 4) - 1;
+        for (let i = 0; i < inputValues.buyoutDuration * 4; i++) {
+            houseValue.push(inputValues.purchasePrice * (1 + QuarterlyAppreciationRate) ** (i));
         }
         houseValue.push(inputValues.sellingPrice);
         const homelyStakeValue = houseValue.map(value => ((value / inputValues.purchasePrice - 1) * inputValues.leverage + 1) * inputValues.homelyDownPayment);
@@ -132,6 +132,89 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let chartHouseEquity;  // Declare a global variable to hold the chart instance
+    function updateGraphsHouseEquity(inputValues) {
+        // updates the graph with house value
+        const principalInterestMonthly = calculatePrincipalInterestMonthly(inputValues);
+        const principalLeft = principalInterestMonthly
+            .filter((_, index) => index % 4 === 0)
+            .map(month => month.principalLeft);
+        const interestPaid = principalInterestMonthly
+            .filter((_, index) => index % 4 === 0)
+            .map(month => month.totalInterestPaid);
+
+        const totalInterest = interestPaid[interestPaid.length - 1];
+        const interestLeft = interestPaid.map(value => totalInterest - value);
+
+        const houseValue = [];
+        const QuarterlyAppreciationRate = (inputValues.sellingPrice / inputValues.purchasePrice) ** (1 / inputValues.buyoutDuration) - 1;
+        for (let i = 0; i < inputValues.buyoutDuration * 4; i++) {
+            houseValue.push(inputValues.purchasePrice * (1 + QuarterlyAppreciationRate) ** (i / 4));
+        }
+        houseValue.push(inputValues.sellingPrice);
+
+        // Append 0's to principalLeft and interestLeft if they are shorter than houseValue
+        const N = houseValue.length;
+        while (principalLeft.length < N) {
+            principalLeft.push(0);
+        }
+        while (interestLeft.length < N) {
+            interestLeft.push(0);
+        }
+
+        // Rest of the code...
+        
+
+
+        const homelyStakeValue = houseValue.map(value => ((value / inputValues.purchasePrice - 1) * inputValues.leverage + 1) * inputValues.homelyDownPayment);
+
+
+        const buyerStakeValue = houseValue.map(value => value - homelyStakeValue[houseValue.indexOf(value)] - principalLeft[houseValue.indexOf(value)]);
+
+
+        const homelyStakeValueSliced = homelyStakeValue.slice(0, N);
+        const buyerStakeValueSliced = buyerStakeValue.slice(0, N);
+        const principalLeftSliced = principalLeft.slice(0, N);
+        const interestLeftSliced = interestLeft.slice(0, N);
+
+        let options = createHouseValueEquity(
+            homelyStakeValueSliced,
+            buyerStakeValueSliced,
+            principalLeftSliced,
+            interestLeftSliced)
+
+        console.log(options)
+
+        let chartContainer = document.getElementById('chartContainerEquity');
+
+        // Check if chart already exists
+        if (chartHouseEquity) {
+            // Update the existing chart's series
+            chartHouseEquity.updateSeries([
+            {
+                name: 'Buyer Stake Value',
+                data: homelyStakeValueSliced
+            },
+            {
+                name: 'Homely Stake Value',
+                data: buyerStakeValueSliced
+            },
+            {
+                name: 'Principal Left',
+                data: principalLeftSliced
+            },
+            {
+                name: 'Interest Left',
+                data: interestLeftSliced
+            },
+            ]);
+        } else {
+            // Initialize the chart for the first time
+            chartHouseEquity = new ApexCharts(chartContainer, options);
+            chartHouseEquity.render();
+        }
+    }
+
 
 
 
@@ -144,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateInformationOutput(inputValues);
         updateGraphPricipalInterest(inputValues);
         updateGraphsHouseValue(inputValues);
+        updateGraphsHouseEquity(inputValues);
     }
 
     // Add event listeners to input fields
