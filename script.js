@@ -97,8 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateGraphsHouseValue(inputValues) {
         // updates the graph with house value
         const houseValue = []
-        const QuarterlyAppreciationRate = (inputValues.sellingPrice / inputValues.purchasePrice) ** (1 / inputValues.buyoutDuration / 4) - 1;
-        for (let i = 0; i < inputValues.buyoutDuration * 4; i++) {
+        const QuarterlyAppreciationRate = (inputValues.sellingPrice / inputValues.purchasePrice) ** (1 / inputValues.buyoutDuration / 3) - 1;
+        for (let i = 0; i < inputValues.buyoutDuration * 3; i++) {
             houseValue.push(inputValues.purchasePrice * (1 + QuarterlyAppreciationRate) ** (i));
         }
         houseValue.push(inputValues.sellingPrice);
@@ -147,9 +147,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const interestLeft = interestPaid.map(value => totalInterest - value);
 
         const houseValue = [];
-        const QuarterlyAppreciationRate = (inputValues.sellingPrice / inputValues.purchasePrice) ** (1 / inputValues.buyoutDuration) - 1;
-        for (let i = 0; i < inputValues.buyoutDuration * 4; i++) {
-            houseValue.push(inputValues.purchasePrice * (1 + QuarterlyAppreciationRate) ** (i / 4));
+        const QuarterlyAppreciationRate = (inputValues.sellingPrice / inputValues.purchasePrice) ** (1 / inputValues.buyoutDuration / 3) - 1;
+        for (let i = 0; i < inputValues.buyoutDuration * 3; i++) {
+            houseValue.push(inputValues.purchasePrice * (1 + QuarterlyAppreciationRate) ** (i));
         }
         houseValue.push(inputValues.sellingPrice);
 
@@ -162,12 +162,12 @@ document.addEventListener('DOMContentLoaded', () => {
             interestLeft.push(0);
         }
 
-        // Rest of the code...
-        
-
-
-        const homelyStakeValue = houseValue.map(value => ((value / inputValues.purchasePrice - 1) * inputValues.leverage + 1) * inputValues.homelyDownPayment);
-
+        const homelyStakeValue = houseValue.map((value, index) => {
+            if (index > inputValues.holdingPeriod * 3) {
+                return 0;
+            }
+            return ((value / inputValues.purchasePrice - 1) * inputValues.leverage + 1) * inputValues.homelyDownPayment;
+        });
 
         const buyerStakeValue = houseValue.map(value => value - homelyStakeValue[houseValue.indexOf(value)] - principalLeft[houseValue.indexOf(value)]);
 
@@ -191,22 +191,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chartHouseEquity) {
             // Update the existing chart's series
             chartHouseEquity.updateSeries([
-            {
-                name: 'Buyer Stake Value',
-                data: homelyStakeValueSliced
-            },
-            {
-                name: 'Homely Stake Value',
-                data: buyerStakeValueSliced
-            },
-            {
-                name: 'Principal Left',
-                data: principalLeftSliced
-            },
-            {
-                name: 'Interest Left',
-                data: interestLeftSliced
-            },
+                {
+                    name: 'Homely',
+                    data: homelyStakeValueSliced
+                },
+                {
+                    name: 'Buyer',
+                    data: buyerStakeValueSliced
+                },
+                {
+                    name: 'Bank',
+                    data: principalLeftSliced
+                },
+                {
+                    name: 'Interest',
+                    data: interestLeftSliced
+                },
             ]);
         } else {
             // Initialize the chart for the first time

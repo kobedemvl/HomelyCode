@@ -70,7 +70,7 @@ export function createPricipalInterestOptions(principalLeft, interestPaid) {
         }],
         xaxis: {
             tickAmount: 10,
-            categories: [...Array(principalLeft.length).keys()].map(month => {
+            categories: [...Array(120).keys()].map(month => {
                 const year = Math.floor(month * 4 / 12) + 1;
                 const monthName = new Date(2000, month * 4 % 12, 1).toLocaleString('default', { month: 'short' });
                 return `Y${year} ${monthName}`;
@@ -125,7 +125,7 @@ export function createHouseValueOptions(houseValue, buyerStakeValue, homelyStake
 
         xaxis: {
             tickAmount: 10,
-            categories: [...Array(houseValue.length).keys()].map(month => {
+            categories: [...Array(40).keys()].map(month => {
                 const year = Math.floor(month * 4 / 12) + 1;
                 const monthName = new Date(2000, month * 4 % 12, 1).toLocaleString('default', { month: 'short' });
                 return `Y${year} ${monthName}`;
@@ -189,7 +189,7 @@ export function createHouseValueEquity(homelyStakeValue, buyerStakeValue, princi
 
         xaxis: {
             tickAmount: 10,
-            categories: [...Array(homelyStakeValue.length).keys()].map(month => {
+            categories: [...Array(120).keys()].map(month => {
                 const year = Math.floor(month * 4 / 12) + 1;
                 const monthName = new Date(2000, month * 4 % 12, 1).toLocaleString('default', { month: 'short' });
                 return `Y${year} ${monthName}`;
