@@ -19,6 +19,7 @@ body {
     width: 60%;
     max-width: 200px;
     margin-right: 5px;
+    min-height: 130px;
 }
 .center {
     display: flex;
